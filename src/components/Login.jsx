@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./login.css";
-function Login() {
+
+function Login({ updateUserDetails }) {
     const [form, setForm] = useState({ name: "", pass: "" });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -15,25 +16,27 @@ function Login() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-      
         if (!form.name && !form.pass) {
             setError("Both fields are required.");
             return;
         }
-        if(!form.name && form.pass)
-        {
+        if (!form.name && form.pass) {
             setError("Username required.");
-            return; 
+            return;
         }
-        if(form.name && !form.pass)
-            {
-                setError("Password required.");
-                return; 
-            }
+        if (form.name && !form.pass) {
+            setError("Password required.");
+            return;
+        }
 
         setSuccess(`Welcome, ${form.name}!`);
         setError("");
 
+        // Use the actual form data
+        updateUserDetails({
+            name: form.name,
+            email: form.name + '@gmail.com'
+        });
     };
 
     return (
@@ -47,8 +50,7 @@ function Login() {
                     value={form.name}
                     onChange={handleChange}
                 />
-                <br />
-                <br />
+                <br /><br />
 
                 <label htmlFor="pass">Enter your Password: </label>
                 <input
@@ -58,8 +60,7 @@ function Login() {
                     value={form.pass}
                     onChange={handleChange}
                 />
-                <br />
-                <br />
+                <br /><br />
                 <button type="submit">Submit</button>
             </form>
             <br />
