@@ -1,0 +1,219 @@
+
+========================================
+FULL STACK PROJECT NOTES (REACT + NODE)
+========================================
+
+1. ROUTING (React Router DOM)
+-----------------------------
+- React Router DOM manages in‑app navigation by mapping URL paths (everything after the domain) to React components.
+  Example: https://www.domain.com/login/register
+           |                          |
+           ^-- React Router matches '/login/register'.
+
+Installation:
+  npm i react-router-dom
+
+Key concepts:
+  <BrowserRouter>, <Routes>, <Route>, <Navigate>
+
+- React Router DOM handles navigation without page reload.
+- Works by rendering components based on the URL path.
+- Key components:
+  - <BrowserRouter>: Top-level wrapper that uses HTML5 history API.
+  - <Routes>: Wraps multiple <Route> elements.
+  - <Route>: Maps a path to a component.
+  - <Navigate>: Used for redirecting.
+  - useNavigate(): Hook to programmatically navigate.
+  - useParams(): Hook to access URL parameters.
+  - useLocation(): Access the current location object.
+
+Best Practices:
+- Keep routing centralized in App.jsx.
+- Use nested routes for dashboards and protected pages.
+- Create a ProtectedRoute component for auth-guarded routes.
+
+
+2. APP LAYOUT PATTERN
+---------------------
+- Create an AppLayout component in /layout.
+- All pages (Home, Login, Dashboard) are rendered as children inside AppLayout.
+- In App.jsx you only render <AppLayout> with the current page as its child.
+- Create reusable layout components like AppLayout, AuthLayout, etc.
+- Place headers, footers, and sidebars in layout components.
+- Children pages will render inside layout using {children}.
+
+3. GIT BASICS
+-------------
+- git init         # Initialize a local Git repo.
+- git add .        # Stage all changes.
+- git commit -m "" # Commit with message.
+- git status       # Show changed files.
+- git log          # View commit history.
+- git remote add origin <url> # Add GitHub repo.
+- git push -u origin main     # Push first time.
+- git log          # View commit history.
+
+4. BACKEND – REST API WITH EXPRESS
+----------------------------------
+Project root
+|-- project-server/
+    |-- package.json        (npm init -y)
+    |-- node_modules/       (npm install express)
+    |-- src/
+        |-- controller/
+        |   |-- authController.js
+        |-- routes/
+        |   |-- authRoutes.js
+        |-- middleware/
+        |-- manager/
+        |-- dao/
+    |-- server.js
+
+Common 4xx error codes:
+  401  Unauthorized  – invalid credentials.
+  402  Payment Required (rarely used).
+  403  Forbidden      – valid credentials but no permission.
+  404  Not Found.
+
+Middleware to consider:
+- body-parser (now built-in to Express)
+- morgan (for logging)
+- helmet (security headers)
+- express-validator (input validation)
+
+Folder Recommendations:
+- controller/: Business logic
+- routes/: Express routers
+- middleware/: Authentication, error handling, etc.
+- dao/: Data access logic (optional)
+- manager/: Service layer or utilities
+
+server.js Essentials:
+- Import express, cors, dotenv
+- app.use(express.json())
+- app.use(cors({ ... }))
+- app.listen(5000)
+
+5. JWT (JSON Web Token)
+-----------------------
+Purpose:
+  • Authentication (stateless)
+  • Authorization
+  • Secure information exchange
+
+How it works:
+  1. User submits credentials.
+  2. Server validates and issues a signed JWT (npm install jsonwebtoken).
+  3. Client stores token (cookie/localStorage).
+  4. Client sends token in Authorization header.
+  5. Server verifies signature and processes request.
+
+Advantages:
+  - No server‑side sessions.
+  - Scalable for distributed systems.
+  - Integrity: signature prevents tampering.
+
+Typical use cases:
+  - Securing REST APIs.
+  - Single Sign‑On (SSO).
+  - Micro‑services auth propagation.
+
+Structure of JWT:
+- Header: Type of token + hashing algorithm.
+- Payload: Claims/data (e.g., userId, role).
+- Signature: HMAC SHA256 using secret.
+
+Tips:
+- Never store JWT secrets in code. Use .env files.
+- Use short expiry tokens + refresh token mechanism.
+- In production, always use HTTPS when sending tokens.
+
+Useful libraries:
+- jsonwebtoken (JWT)
+- bcrypt (password hashing)
+- cookie-parser (if storing JWT in cookies)
+
+
+6. API CLIENT – AXIOS
+---------------------
+Install in React project:
+  npm install axios
+
+Example call:
+  axios.post('http://localhost:5000/api/data', payload);
+
+- axios.get(url)
+- axios.post(url, data)
+- axios.put(url, data)
+- axios.delete(url)
+
+Best Practices:
+- Create an axios instance with baseURL.
+- Add interceptors for adding JWT to requests.
+- Handle 401 errors globally.
+
+Example:
+```js
+const axiosInstance = axios.create({
+  baseURL: "http://localhost:5000",
+  withCredentials: true,
+});
+```
+
+7. CORS (Cross‑Origin Resource Sharing)
+--------------------------------------
+Definition:
+  Browser security policy controlling cross‑origin requests.
+
+Why:
+  Prevents malicious sites from invoking authenticated requests to another origin (mitigates CSRF).
+
+Local dev scenario:
+  Frontend: http://localhost:3000
+  Backend:  http://localhost:5000
+  → Cross‑origin, so browser blocks unless backend allows it.
+
+Node + Express fix:
+  const express = require('express');
+  const cors = require('cors');
+  const app = express();
+  app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }));
+
+Laravel fix (HandleCors.php):
+  'paths' => ['api/*', 'auth/*'],
+  'allowed_origins' => ['http://localhost:3000'],
+  'allowed_methods' => ['*'],
+  'allowed_headers' => ['*'],
+  'supports_credentials' => true,
+
+Typical browser CORS error:
+  Access to XMLHttpRequest at 'http://localhost:5000/...'
+  from origin 'http://localhost:3000' has been blocked by CORS policy.
+
+Advanced CORS Configs:
+- Allow multiple origins:
+  origin: ['http://localhost:3000', 'https://yourdomain.com']
+
+- Pre-flight request handling (OPTIONS)
+  app.options('*', cors());
+
+Security Tip:
+- Set `credentials: true` only when needed and use `sameSite=None` in cookies when working with HTTPS.
+
+8. AUTH STRATEGY OVERVIEW
+-------------------------
+Frontend Auth Flow:
+- Login form collects credentials
+- Sends to backend `/auth/login`
+- Backend responds with JWT
+- Store JWT in localStorage or cookie
+- On each protected request, send JWT in Authorization header
+- On logout, clear token
+
+Protecting Routes:
+- Backend: Middleware to decode JWT and validate.
+- Frontend: Custom PrivateRoute or ProtectedRoute wrapper.
+
